@@ -1,0 +1,44 @@
+# Render Blueprint para MiroFish
+# Despliega el backend (Flask, Docker) y el frontend (sitio estático Vite).
+# Docs: https://render.com/docs/blueprint-spec
+#
+# NOTA: el backend incluye torch + dependencias ML (camel-ai / oasis), por lo que
+# requiere bastante memoria. Usa un plan con >= 2 GB de RAM (standard o superior).
+services:
+  # ----- Backend: API Flask en contenedor Docker -----
+  - type: web
+    name: mirofish-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    plan: standard
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: FLASK_DEBUG
+        value: "false"
+      # Secretos: configúralos en el dashboard de Render (sync: false)
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_BASE_URL
+        value: https://dashscope.aliyuncs.com/compatible-mode/v1
+      - key: LLM_MODEL_NAME
+        value: qwen-plus
+      - key: ZEP_API_KEY
+        sync: false
+
+  # ----- Frontend: SPA estática (Vue + Vite) -----
+  - type: web
+    name: mirofish-frontend
+    runtime: static
+    buildCommand: npm install && npm install --prefix frontend && npm run build
+    staticPublishPath: ./frontend/dist
+    autoDeploy: true
+    envVars:
+      # URL pública del backend desplegado arriba (ej: https://mirofish-backend.onrender.com)
+      - key: VITE_API_BASE_URL
+        sync: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

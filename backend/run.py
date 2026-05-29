@@ -37,8 +37,9 @@ def main():
     app = create_app()
     
     # 获取运行配置
+    # 云平台（Render / Railway 等）通过 PORT 注入端口，优先使用
     host = os.environ.get('FLASK_HOST', '0.0.0.0')
-    port = int(os.environ.get('FLASK_PORT', 5001))
+    port = int(os.environ.get('PORT') or os.environ.get('FLASK_PORT', 5001))
     debug = Config.DEBUG
     
     # 启动服务
